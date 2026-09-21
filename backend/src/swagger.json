@@ -1,0 +1,42 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "Co-working Booking API", "version": "1.0.0", "description": "Desks & meeting rooms booking system" },
+  "servers": [{ "url": "http://localhost:5000" }],
+  "components": {
+    "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } }
+  },
+  "paths": {
+    "/api/auth/register": { "post": { "tags": ["Auth"], "summary": "Register (rate limited)", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "name": {"type":"string"}, "email": {"type":"string"}, "password": {"type":"string"}, "role": {"type":"string","enum":["member","admin"]} } } } } }, "responses": { "201": { "description": "Created" } } } },
+    "/api/auth/login": { "post": { "tags": ["Auth"], "summary": "Login (rate limited)", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "email": {"type":"string"}, "password": {"type":"string"} } } } } }, "responses": { "200": { "description": "OK" } } } },
+    "/api/auth/refresh": { "post": { "tags": ["Auth"], "summary": "Rotate refresh token", "responses": { "200": { "description": "OK" } } } },
+    "/api/auth/logout": { "post": { "tags": ["Auth"], "summary": "Revoke refresh token", "responses": { "200": { "description": "OK" } } } },
+    "/api/auth/me": { "get": { "tags": ["Auth"], "security": [{"bearerAuth":[]}], "responses": { "200": { "description": "OK" } } } },
+    "/api/spaces": {
+      "get": { "tags": ["Spaces"], "summary": "List spaces (search/filter/paginate)", "parameters": [
+        { "name": "search", "in": "query", "schema": {"type":"string"} },
+        { "name": "type", "in": "query", "schema": {"type":"string","enum":["desk","room"]} },
+        { "name": "minCapacity", "in": "query", "schema": {"type":"integer"} },
+        { "name": "date", "in": "query", "schema": {"type":"string"} },
+        { "name": "onlyAvailable", "in": "query", "schema": {"type":"boolean"} },
+        { "name": "page", "in": "query", "schema": {"type":"integer"} },
+        { "name": "limit", "in": "query", "schema": {"type":"integer"} }
+      ], "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Spaces"], "summary": "Create space (admin)", "security": [{"bearerAuth":[]}], "responses": { "201": { "description": "Created" } } }
+    },
+    "/api/spaces/{id}": {
+      "get": { "tags": ["Spaces"], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"string"}}], "responses": { "200": { "description": "OK" } } },
+      "put": { "tags": ["Spaces"], "summary": "Update (admin)", "security": [{"bearerAuth":[]}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"string"}}], "responses": { "200": { "description": "OK" } } },
+      "delete": { "tags": ["Spaces"], "summary": "Delete (admin)", "security": [{"bearerAuth":[]}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"string"}}], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/spaces/{id}/availability": { "get": { "tags": ["Spaces"], "summary": "Availability calendar for a date", "parameters": [ {"name":"id","in":"path","required":true,"schema":{"type":"string"}}, {"name":"date","in":"query","required":true,"schema":{"type":"string"}} ], "responses": { "200": { "description": "OK" } } } },
+    "/api/spaces/{id}/maintenance": { "post": { "tags": ["Spaces"], "summary": "Block maintenance window (admin)", "security": [{"bearerAuth":[]}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"string"}}], "responses": { "201": { "description": "Created" } } } },
+    "/api/bookings": {
+      "post": { "tags": ["Bookings"], "summary": "Create booking (concurrency safe)", "security": [{"bearerAuth":[]}], "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "spaceId": {"type":"string"}, "date": {"type":"string"}, "start": {"type":"string"}, "end": {"type":"string"} } } } } }, "responses": { "201": { "description": "Created" }, "409": { "description": "Slot conflict" } } },
+      "get": { "tags": ["Bookings"], "summary": "All bookings (admin, filterable)", "security": [{"bearerAuth":[]}], "parameters": [ {"name":"status","in":"query","schema":{"type":"string"}}, {"name":"date","in":"query","schema":{"type":"string"}}, {"name":"spaceId","in":"query","schema":{"type":"string"}} ], "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/bookings/my": { "get": { "tags": ["Bookings"], "summary": "My bookings", "security": [{"bearerAuth":[]}], "responses": { "200": { "description": "OK" } } } },
+    "/api/bookings/{id}/cancel": { "patch": { "tags": ["Bookings"], "security": [{"bearerAuth":[]}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"string"}}], "responses": { "200": { "description": "OK" } } } },
+    "/api/bookings/{id}/approve": { "patch": { "tags": ["Bookings"], "summary": "Approve + auto-reject overlaps (admin)", "security": [{"bearerAuth":[]}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"string"}}], "responses": { "200": { "description": "OK" } } } },
+    "/api/bookings/{id}/reject": { "patch": { "tags": ["Bookings"], "summary": "Reject (admin)", "security": [{"bearerAuth":[]}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"string"}}], "responses": { "200": { "description": "OK" } } } }
+  }
+}

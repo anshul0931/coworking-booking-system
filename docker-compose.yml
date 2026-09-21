@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  mongo:
+    image: mongo:7
+    container_name: cowork-mongo
+    ports: ["27017:27017"]
+    volumes: ["mongo_data:/data/db"]
+
+  backend:
+    build: ./backend
+    container_name: cowork-backend
+    depends_on: [mongo]
+    environment:
+      PORT: 5000
+      MONGO_URI: mongodb://mongo:27017/coworking
+      JWT_ACCESS_SECRET: dev_access_secret
+      JWT_REFRESH_SECRET: dev_refresh_secret
+      ACCESS_TOKEN_TTL: 15m
+      REFRESH_TOKEN_TTL_DAYS: 7
+    ports: ["5000:5000"]
+    command: sh -c "node src/seed.js && node src/server.js"
+
+  frontend:
+    build: ./frontend
+    container_name: cowork-frontend
+    depends_on: [backend]
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    ports: ["5173:5173"]
+
+volumes:
+  mongo_data:
