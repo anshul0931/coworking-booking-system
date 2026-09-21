@@ -3,7 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api, { errMsg } from '../api/client';
 import { useAuth } from '../api/auth.jsx';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 
 export default function SpaceDetail() {
   const { id } = useParams();
